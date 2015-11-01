@@ -1,15 +1,18 @@
 package com.takeoutninja;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.ResultReceiver;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NavUtils;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -40,6 +43,7 @@ public class LocationActivity extends AppCompatActivity
         OnMapReadyCallback {
 
     private static final String TAG = "LocationActivity";
+    private static final int MY_PERMISSIONS_REQUEST_FINE_LOCATION = 1;
     private GoogleApiClient mCredentialsApiClient;
     private GoogleMap googleMap;
     protected GoogleApiClient mGoogleApiClient;
@@ -82,12 +86,8 @@ public class LocationActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_location);
         findViewById(R.id.button_delete_loaded_credential).setOnClickListener(this);
-        //Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
-        //setSupportActionBar(myToolbar);
-        //getSupportActionBar().setLogo(R.drawable.ninja);
-        //getSupportActionBar().setDisplayUseLogoEnabled(true);
-        //getSupportActionBar().setDisplayShowTitleEnabled(false);
 
+        checkLocationPermissions();
 
         mCredentialsApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
@@ -110,6 +110,41 @@ public class LocationActivity extends AppCompatActivity
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+    }
+
+    private void checkLocationPermissions() {
+        // Here, thisActivity is the current activity
+        if (ContextCompat.checkSelfPermission(LocationActivity.this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+                ActivityCompat.requestPermissions(LocationActivity.this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        MY_PERMISSIONS_REQUEST_FINE_LOCATION);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_REQUEST_FINE_LOCATION: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(this, R.string.location_permission_granted,
+                            Toast.LENGTH_LONG).show();
+                    startLocationUpdates();
+
+                } else {
+
+                    Toast.makeText(this, R.string.location_permission_denied,
+                            Toast.LENGTH_LONG).show();
+
+                }
+                return;
+            }
+        }
     }
 
     /**
